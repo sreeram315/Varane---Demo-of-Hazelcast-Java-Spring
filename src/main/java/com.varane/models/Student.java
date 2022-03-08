@@ -4,12 +4,23 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.io.Serializable;
 
+/**
+ * Model class for students
+ */
 @Entity
 public class Student implements Serializable {
     @Id
     Integer id;
     String name;
     String contact;
+
+    public Student(){}
+
+    public Student(Integer id, String name, String contact) {
+        this.id = id;
+        this.name = name;
+        this.contact = contact;
+    }
 
     public Integer getId() {
         return id;

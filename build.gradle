@@ -20,6 +20,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-rest'
     implementation 'org.springframework.boot:spring-boot-starter-tomcat'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.h2database:h2:2.1.210'
 
     implementation 'com.hazelcast:hazelcast:5.1'
 }

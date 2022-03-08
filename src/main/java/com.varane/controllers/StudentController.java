@@ -12,8 +12,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
+
+
+/**
+ * Controllers for student related services
+ * @author Sreeram Maram
+ */
 
 @RestController
 public class StudentController {
@@ -25,17 +32,22 @@ public class StudentController {
     @Autowired
     StudentDAO studentDAO;
 
-    @GetMapping("/hello")
-    String hello(){
-        return "hello";
-    }
-
     private ConcurrentMap<Integer, Student> hazelcastMap() {
         return hazelcastInstance.getMap("map");
     }
 
+    /**
+     * For given ID,
+     *  -   Checks if Student with ID exists in cache. If yes, return.
+     *  -   Else, get from database. If exists, return.
+     *  -   Else, return  I am a teapot exception.
+     *
+     * @param id
+     * @return
+     * @throws InterruptedException
+     */
     @GetMapping("/student/get")
-    Student getStudent(Integer id){
+    Student getStudent(Integer id) throws InterruptedException {
         LOG.info("Student data requested for id: " + id);
         Student student;
         student = hazelcastMap().get(id);
@@ -44,34 +56,72 @@ public class StudentController {
             return student;
         }
         student = studentDAO.findById2(id).orElse(null);
-        if(student == null)
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Student with id:%d - Not Found ", id));
+        if(student == null) {
+            LOG.info(String.format("Student not found for id: %d", id));
+            throw new ResponseStatusException(HttpStatus.I_AM_A_TEAPOT, String.format("Student with id:%d - Not Found ", id));
+        }
         LOG.info(String.format("Inserting student into cache for id: %d", id));
         hazelcastMap().put(id, student);
         return student;
     }
 
+    /**
+     * Adds a Student entru into database.
+     * This method also adds the entry into the cache.
+     *
+     * @param id
+     * @param name
+     * @param contact
+     * @return
+     * @throws InterruptedException
+     */
     @PostMapping("/student/add")
-    Student addStudent(Student student){
-        Student studentObj = studentDAO.findById(student.getId()).orElse(null);
-        if(studentObj != null)
-            throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("Student with id:%d - Already Exists ", studentObj.getId()));
-        studentDAO.save(student);
-        LOG.info("New Student added with id: " + student.getId() + " Name: " + student.getName());
+    Student addStudent(Integer id, String name, String contact) throws InterruptedException {
+        LOG.info("New Student ADD request with id: " + id + " Name: " + name);
+        Student student = studentDAO.findById(id);
+        if(student != null) {
+            LOG.info(String.format("Student already exists with id: %d", student.getId()));
+            throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("Student with id:%d - Already Exists ", student.getId()));
+        }
+        studentDAO.insertingStudent(id, name, contact);
+        student = studentDAO.findById(id);
+        LOG.info(String.format("Adding student to cache with id:%d", student.getId()));
+        hazelcastMap().put(student.getId(), student);
         return student;
     }
 
+    /**
+     * Return list of all students available in the database.
+     * @return
+     * @throws InterruptedException
+     */
     @GetMapping("/student/all")
-    List<Student> getAllStudents(){
-        List<Student> students = (List<Student>) studentDAO.findAll();
+    List<Student> getAllStudents() throws InterruptedException {
+        List<Student> students = studentDAO.findAll();
         LOG.info("All students data requested");
         return students;
     }
 
+    /**
+     * Return list of students in currently held in cache.
+     * @return
+     */
+    @GetMapping("/student/all-in-cache")
+    List<Student> getAllStudentsInCache(){
+        List<Student> students = new ArrayList(hazelcastMap().values());
+        return students;
+    }
+
+    /**
+     * Return students with ID less than queries id.
+     * @param id
+     * @return
+     * @throws InterruptedException
+     */
     @GetMapping("/students/id-less-than/")
-    List<Student> getStudentsIdLessThan(Integer id){
+    List<Student> getStudentsIdLessThan(Integer id) throws InterruptedException {
         List<Student> students = studentDAO.getStudentsLessThanId(id);
-        LOG.info("Students data wiht id < " + id + " requested");
+        LOG.info("Students data with id < " + id + " requested");
         return students;
     }
 
