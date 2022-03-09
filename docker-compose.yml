@@ -4,11 +4,5 @@ services:
   web:
     build: .
     image: varane
-#    environment:
-#      SPRING_DATASOURCE_URL: jdbc:mysql://varane.cqwyqvafdom2.ap-south-1.rds.amazonaws.com:3306/database?autoReconnec2t=true&useSSL=false
-#    depends_on:
-#      - docker-mysql
-#    external_links:
-#      - mysql:mysql
     ports:
       - "8080:8080"

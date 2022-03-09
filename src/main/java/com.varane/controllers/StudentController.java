@@ -1,6 +1,7 @@
 package com.varane.controllers;
 
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.query.impl.predicates.SqlPredicate;
 import com.varane.dao.StudentDAO;
 import com.varane.models.Student;
 import org.apache.commons.logging.Log;
@@ -43,7 +44,7 @@ public class StudentController {
      *  -   Else, return  I am a teapot exception.
      *
      * @param id
-     * @return
+     * @return Student with id=id
      * @throws InterruptedException
      */
     @GetMapping("/student/get")
@@ -66,7 +67,7 @@ public class StudentController {
     }
 
     /**
-     * Adds a Student entru into database.
+     * Adds a Student entry into database.
      * This method also adds the entry into the cache.
      *
      * @param id
@@ -89,6 +90,19 @@ public class StudentController {
         hazelcastMap().put(student.getId(), student);
         return student;
     }
+
+    /**
+     * endpoint to demonstrate sql predicate
+     * Values in Imap here are listed and queried in an SQL fashion.
+     *
+     * @return list of students whose name has letter s
+     */
+    @GetMapping("/student/sql-example")
+    List<Student> getAllStudentsInCacheSql(Character ch){
+        List<Student> students = new ArrayList(hazelcastInstance.getMap("map").values(new SqlPredicate("name LIKE '%s%' ")));
+        return students;
+    }
+
 
     /**
      * Return list of all students available in the database.
