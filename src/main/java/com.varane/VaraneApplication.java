@@ -1,6 +1,9 @@
 package com.varane;
 
-import com.varane.dao.StudentDAO;
+import com.hazelcast.client.HazelcastClient;
+import com.hazelcast.client.config.ClientConfig;
+import com.hazelcast.client.config.ClientUserCodeDeploymentConfig;
+import com.hazelcast.core.HazelcastInstance;
 import com.varane.repositories.StudentRepo;
 import com.varane.utils.PopulateData;
 import org.springframework.boot.CommandLineRunner;
@@ -8,6 +11,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Spring boot application starter

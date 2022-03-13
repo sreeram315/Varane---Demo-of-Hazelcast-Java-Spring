@@ -1,7 +1,11 @@
 package com.varane.controllers;
 
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 import com.hazelcast.query.impl.predicates.SqlPredicate;
+import com.hazelcast.sql.SqlResult;
+import com.hazelcast.sql.SqlRow;
+import com.hazelcast.sql.SqlService;
 import com.varane.dao.StudentDAO;
 import com.varane.models.Student;
 import org.apache.commons.logging.Log;
@@ -15,7 +19,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
 
 
 /**
@@ -28,14 +31,8 @@ public class StudentController {
     private static final Log LOG = LogFactory.getLog(StudentController.class);
 
     @Autowired
-    private HazelcastInstance hazelcastInstance;
-
-    @Autowired
     StudentDAO studentDAO;
 
-    private ConcurrentMap<Integer, Student> hazelcastMap() {
-        return hazelcastInstance.getMap("map");
-    }
 
     /**
      * For given ID,
@@ -50,19 +47,9 @@ public class StudentController {
     @GetMapping("/student/get")
     Student getStudent(Integer id) throws InterruptedException {
         LOG.info("Student data requested for id: " + id);
-        Student student;
-        student = hazelcastMap().get(id);
-        if(student != null){
-            LOG.info(String.format("Fetched student from cache for id: %d", id));
-            return student;
-        }
-        student = studentDAO.findById2(id).orElse(null);
-        if(student == null) {
-            LOG.info(String.format("Student not found for id: %d", id));
+        Student student = studentDAO.findByIdCustom(id);
+        if(student == null)
             throw new ResponseStatusException(HttpStatus.I_AM_A_TEAPOT, String.format("Student with id:%d - Not Found ", id));
-        }
-        LOG.info(String.format("Inserting student into cache for id: %d", id));
-        hazelcastMap().put(id, student);
         return student;
     }
 
@@ -78,16 +65,7 @@ public class StudentController {
      */
     @PostMapping("/student/add")
     Student addStudent(Integer id, String name, String contact) throws InterruptedException {
-        LOG.info("New Student ADD request with id: " + id + " Name: " + name);
-        Student student = studentDAO.findById(id);
-        if(student != null) {
-            LOG.info(String.format("Student already exists with id: %d", student.getId()));
-            throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("Student with id:%d - Already Exists ", student.getId()));
-        }
-        studentDAO.insertingStudent(id, name, contact);
-        student = studentDAO.findById(id);
-        LOG.info(String.format("Adding student to cache with id:%d", student.getId()));
-        hazelcastMap().put(student.getId(), student);
+        Student student = studentDAO.insertingStudent(id, name, contact);
         return student;
     }
 
@@ -95,12 +73,52 @@ public class StudentController {
      * endpoint to demonstrate sql predicate
      * Values in Imap here are listed and queried in an SQL fashion.
      *
+     * Returns the students who have substring name in their name (cached students are only queried)
+     *
+     * @parm substring
      * @return list of students whose name has letter s
      */
-    @GetMapping("/student/sql-example")
-    List<Student> getAllStudentsInCacheSql(Character ch){
-        List<Student> students = new ArrayList(hazelcastInstance.getMap("map").values(new SqlPredicate("name LIKE '%s%' ")));
+    @GetMapping("/student/cache-name-contains")
+    List<Student> getAllStudentsInCacheSql(String substring){
+        String sqlPredicateString = "name LIKE %" + substring + "%";
+        IMap<Integer, Student> hazelcastStudentsMap = studentDAO.getHazelcastStudentsMap();
+        List<Student> students = null;
+
+      students = new ArrayList(hazelcastStudentsMap.values(new SqlPredicate(sqlPredicateString)));
         return students;
+    }
+
+    @GetMapping("/sql-test")
+    void sqlTest(){
+        HazelcastInstance hazelcastInstance = studentDAO.getHazelcastInstance();
+        SqlService sqlService = hazelcastInstance.getSql();
+
+
+        sqlService.execute("CREATE MAPPING studentMap ( "
+                + "__key INT, "
+                + "id INT ) "
+                + "name VARCHAR ,"
+                + "contact VARCHAR,"
+                + "TYPE IMap "
+                + "OPTIONS ("
+                + "    'keyFormat'='int', "
+                + "    'valueFormat'='compact', "
+                + "    'valueCompactTypeName'='" + Student.class.getName() + "' ) ");
+
+//        sqlService.execute("INSERT INTO studentMap (__key, name, surname, id) VALUES (202020, ?, ?, 202020)", "Jack", "Sparrowlord");
+
+//        Query map with sql
+//        SqlResult sqlRows = sqlService.execute("SELECT * FROM studentMap WHERE id = 202020");
+//        for (SqlRow sqlRow : sqlRows) {
+//            System.out.println(sqlRow);
+//        }
+//        try (SqlResult result = hazelcastInstance.getSql().execute("SELECT __key FROM student")) {
+//            for (SqlRow row : result) {
+//                String student_name = row.getObject(0);
+//
+//                System.out.println(student_name);
+//            }
+//        }
     }
 
 
@@ -122,7 +140,8 @@ public class StudentController {
      */
     @GetMapping("/student/all-in-cache")
     List<Student> getAllStudentsInCache(){
-        List<Student> students = new ArrayList(hazelcastMap().values());
+        IMap<Integer, Student> hazelcastStudentsMap = studentDAO.getHazelcastStudentsMap();
+        List<Student> students = new ArrayList(hazelcastStudentsMap.values());
         return students;
     }
 
