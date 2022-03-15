@@ -1,11 +1,8 @@
 package com.varane.dao;
 
-
-import com.hazelcast.client.HazelcastClient;
-import com.hazelcast.client.config.ClientConfig;
-import com.hazelcast.client.config.ClientUserCodeDeploymentConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
+import com.varane.controllers.student.StudentConstants;
 import com.varane.models.Student;
 import com.varane.repositories.StudentRepo;
 import org.apache.commons.logging.Log;
@@ -16,7 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,7 +30,7 @@ public class StudentDAO {
     private HazelcastInstance hazelcastInstance;
 
     public IMap<Integer, Student> getHazelcastStudentsMap() {
-        return hazelcastInstance.getMap("students");
+        return hazelcastInstance.getMap(StudentConstants.CACHE_MAP);
     }
 
     public Student findByIdCustom(@Param("id") Integer id) throws InterruptedException {

@@ -5,6 +5,7 @@ import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.ClientUserCodeDeploymentConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.sql.SqlService;
+import com.varane.controllers.student.StudentConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,16 +39,16 @@ public class HazelcastInitializer {
     public static void createMappings(HazelcastInstance hazelcastInstance){
         SqlService sqlService = hazelcastInstance.getSql();
 
-        // Mapping for model: com.varane.models.Student
-        sqlService.execute("DROP MAPPING IF EXISTS students");
-        sqlService.execute("""
-                CREATE MAPPING students
+        // Mapping for model: com.varane.models.Student for IMAP
+        sqlService.execute(String.format("DROP MAPPING IF EXISTS %s", StudentConstants.CACHE_MAP));
+        sqlService.execute(String.format("""
+                CREATE MAPPING %s
                 TYPE IMap
                 OPTIONS (
                     'keyFormat' = 'java',
                     'keyJavaClass' = 'java.lang.Integer',
                     'valueFormat' = 'java',
                     'valueJavaClass' = 'com.varane.models.Student'
-                )""");
+                )""", StudentConstants.CACHE_MAP));
     }
 }

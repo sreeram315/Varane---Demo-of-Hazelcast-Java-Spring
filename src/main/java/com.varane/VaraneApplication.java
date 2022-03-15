@@ -1,9 +1,5 @@
 package com.varane;
 
-import com.hazelcast.client.HazelcastClient;
-import com.hazelcast.client.config.ClientConfig;
-import com.hazelcast.client.config.ClientUserCodeDeploymentConfig;
-import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.varane.repositories.StudentRepo;
 import com.varane.utils.HazelcastInitializer;
@@ -13,9 +9,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Spring boot application starter
@@ -29,8 +22,8 @@ public class VaraneApplication extends SpringBootServletInitializer {
 
     /**
      * Insert dummy data into table while using non-persistent database
-     * @param studentRepo
-     * @return
+     * @param studentRepo Student repository
+     * @return A Bean. Not the food kind.
      */
     @Bean
     public CommandLineRunner startup(StudentRepo studentRepo) {

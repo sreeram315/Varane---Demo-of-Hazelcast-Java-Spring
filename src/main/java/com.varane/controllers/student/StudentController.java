@@ -71,40 +71,6 @@ public class StudentController {
     }
 
     /**
-     * endpoint to demonstrate sql predicate
-     * Values in Imap here are listed and queried in an SQL fashion.
-     *
-     * Returns the students who have substring name in their name (cached students are only queried)
-     *
-     * @param substring substring that is required to be present in student's name
-     * @return list of students whose name has letter s
-     */
-    @GetMapping("/student/cache-name-contains")
-    List<Student> getAllStudentsInCacheSql(String substring){
-        String sqlPredicateString = "name LIKE %" + substring + "%";
-        IMap<Integer, Student> hazelcastStudentsMap = studentDAO.getHazelcastStudentsMap();
-        List<Student> students = null;
-
-        students = new ArrayList(hazelcastStudentsMap.values(new SqlPredicate(sqlPredicateString)));
-        return students;
-    }
-
-    @GetMapping("/sql-test")
-    void sqlTest(){
-        SqlService sqlService = hazelcastInstance.getSql();
-
-        try (SqlResult result = sqlService.execute("SELECT id, name, contact FROM students ORDER BY id")) {
-            for (SqlRow row : result) {
-                Integer id = row.getObject("id");
-                String name = row.getObject("name");
-                String contact = row.getObject("contact");
-                System.out.println(id + " " + name + " " + contact);
-            }
-        }
-    }
-
-
-    /**
      * Return list of all students available in the database.
      * @return list of all students in database
      * @throws InterruptedException yes it does
@@ -117,26 +83,48 @@ public class StudentController {
     }
 
     /**
-     * Return list of students in currently held in cache.
-     * @return list of all students in cache
+     * endpoint to demonstrate sql predicate
+     * Values in Imap here are listed and queried in an SQL fashion.
+     *
+     * Returns the students who have substring name in their name (cached students are only queried)
+     *
+     * @param substring substring that is required to be present in student's name
+     * @return list of students whose name has letter s
      */
-    @GetMapping("/student/all-in-cache")
-    List<Student> getAllStudentsInCache(){
+    @GetMapping("/student/map/name-contains")
+    List<Student> getAllStudentsInCacheSql(String substring){
+        String sqlPredicateString = "name LIKE %" + substring + "%";
         IMap<Integer, Student> hazelcastStudentsMap = studentDAO.getHazelcastStudentsMap();
-        List<Student> students = new ArrayList(hazelcastStudentsMap.values());
+        List<Student> students = new ArrayList(hazelcastStudentsMap.values(new SqlPredicate(sqlPredicateString)));
         return students;
     }
 
     /**
-     * Return students with ID less than queries id.
-     * @param id id of the student
-     * @return list of all students with ID less than queried id
-     * @throws InterruptedException yes it does
+     * This method prints all the student objects in the cache queried through SQL
      */
-    @GetMapping("/students/id-less-than/")
-    List<Student> getStudentsIdLessThan(Integer id) throws InterruptedException {
-        List<Student> students = studentDAO.getStudentsLessThanId(id);
-        LOG.info("Students data with id < " + id + " requested");
+    @GetMapping("student/map/print-all")
+    String sqlTest(){
+        SqlService sqlService = hazelcastInstance.getSql();
+        try (SqlResult result = sqlService.execute(String.format("SELECT id, name, contact FROM %s ORDER BY id",
+                StudentConstants.CACHE_MAP))) {
+            for (SqlRow row : result) {
+                Integer id = row.getObject("id");
+                String name = row.getObject("name");
+                String contact = row.getObject("contact");
+                LOG.info(String.format("%s %s %s", id.toString(), name, contact));
+            }
+        }
+        return String.format("All objects present in %s are printed on logs.", StudentConstants.CACHE_MAP);
+    }
+
+    /**
+     * Return list of students in currently held in cache.
+     * @return list of all students in cache
+     */
+    @GetMapping("/student/map/all")
+    List<Student> getAllStudentsInCache(){
+        IMap<Integer, Student> hazelcastStudentsMap = studentDAO.getHazelcastStudentsMap();
+        List<Student> students = new ArrayList(hazelcastStudentsMap.values());
         return students;
     }
 
