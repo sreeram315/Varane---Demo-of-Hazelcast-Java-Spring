@@ -3,8 +3,6 @@ package com.varane.controllers;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.query.impl.predicates.SqlPredicate;
-import com.hazelcast.sql.SqlResult;
-import com.hazelcast.sql.SqlRow;
 import com.hazelcast.sql.SqlService;
 import com.varane.dao.StudentDAO;
 import com.varane.models.Student;
@@ -33,6 +31,8 @@ public class StudentController {
     @Autowired
     StudentDAO studentDAO;
 
+    @Autowired
+    private HazelcastInstance hazelcastInstance;
 
     /**
      * For given ID,
@@ -40,9 +40,9 @@ public class StudentController {
      *  -   Else, get from database. If exists, return.
      *  -   Else, return  I am a teapot exception.
      *
-     * @param id
+     * @param id id of the student
      * @return Student with id=id
-     * @throws InterruptedException
+     * @throws InterruptedException yes it does
      */
     @GetMapping("/student/get")
     Student getStudent(Integer id) throws InterruptedException {
@@ -57,16 +57,15 @@ public class StudentController {
      * Adds a Student entry into database.
      * This method also adds the entry into the cache.
      *
-     * @param id
-     * @param name
-     * @param contact
-     * @return
-     * @throws InterruptedException
+     * @param id id of the student
+     * @param name name of the student
+     * @param contact contact of the student
+     * @return student created
+     * @throws InterruptedException yes it does
      */
     @PostMapping("/student/add")
     Student addStudent(Integer id, String name, String contact) throws InterruptedException {
-        Student student = studentDAO.insertingStudent(id, name, contact);
-        return student;
+        return studentDAO.insertingStudent(id, name, contact);
     }
 
     /**
@@ -75,7 +74,7 @@ public class StudentController {
      *
      * Returns the students who have substring name in their name (cached students are only queried)
      *
-     * @parm substring
+     * @param substring substring that is required to be present in student's name
      * @return list of students whose name has letter s
      */
     @GetMapping("/student/cache-name-contains")
@@ -90,20 +89,21 @@ public class StudentController {
 
     @GetMapping("/sql-test")
     void sqlTest(){
-        HazelcastInstance hazelcastInstance = studentDAO.getHazelcastInstance();
+//        HazelcastInstance hazelcastInstance = studentDAO.getHazelcastInstance();
         SqlService sqlService = hazelcastInstance.getSql();
 
+        sqlService.execute(" ");
 
-        sqlService.execute("CREATE MAPPING studentMap ( "
-                + "__key INT, "
-                + "id INT ) "
-                + "name VARCHAR ,"
-                + "contact VARCHAR,"
-                + "TYPE IMap "
-                + "OPTIONS ("
-                + "    'keyFormat'='int', "
-                + "    'valueFormat'='compact', "
-                + "    'valueCompactTypeName'='" + Student.class.getName() + "' ) ");
+//        sqlService.execute("CREATE MAPPING studentMap ( "
+//                + "__key INT, "
+//                + "id INT ) "
+//                + "name VARCHAR ,"
+//                + "contact VARCHAR,"
+//                + "TYPE IMap "
+//                + "OPTIONS ("
+//                + "    'keyFormat'='int', "
+//                + "    'valueFormat'='compact', "
+//                + "    'valueCompactTypeName'='" + Student.class.getName() + "' ) ");
 
 //        sqlService.execute("INSERT INTO studentMap (__key, name, surname, id) VALUES (202020, ?, ?, 202020)", "Jack", "Sparrowlord");
 
@@ -124,8 +124,8 @@ public class StudentController {
 
     /**
      * Return list of all students available in the database.
-     * @return
-     * @throws InterruptedException
+     * @return list of all students in database
+     * @throws InterruptedException yes it does
      */
     @GetMapping("/student/all")
     List<Student> getAllStudents() throws InterruptedException {
@@ -136,7 +136,7 @@ public class StudentController {
 
     /**
      * Return list of students in currently held in cache.
-     * @return
+     * @return list of all students in cache
      */
     @GetMapping("/student/all-in-cache")
     List<Student> getAllStudentsInCache(){
@@ -147,9 +147,9 @@ public class StudentController {
 
     /**
      * Return students with ID less than queries id.
-     * @param id
-     * @return
-     * @throws InterruptedException
+     * @param id id of the student
+     * @return list of all students with ID less than queried id
+     * @throws InterruptedException yes it does
      */
     @GetMapping("/students/id-less-than/")
     List<Student> getStudentsIdLessThan(Integer id) throws InterruptedException {

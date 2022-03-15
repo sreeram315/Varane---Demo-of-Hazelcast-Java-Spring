@@ -30,18 +30,8 @@ public class StudentDAO {
     @Autowired
     StudentRepo studentRepo;
 
-    private HazelcastInstance hazelcastInstance = HazelcastClient.newHazelcastClient(getConfig());
-
-    private ClientConfig getConfig(){
-        ClientConfig clientConfig = new ClientConfig();
-        clientConfig.getUserCodeDeploymentConfig().setEnabled(true);
-        ClientUserCodeDeploymentConfig distCLConfig = clientConfig.getUserCodeDeploymentConfig();
-        List<String> classNames  = new ArrayList<>();
-        classNames.add("com.varane.models.Student");
-        distCLConfig.setEnabled( true )
-                        .setClassNames(classNames);
-        return clientConfig;
-    }
+    @Autowired
+    private HazelcastInstance hazelcastInstance;
 
     public IMap<Integer, Student> getHazelcastStudentsMap() {
         return hazelcastInstance.getMap("students");
