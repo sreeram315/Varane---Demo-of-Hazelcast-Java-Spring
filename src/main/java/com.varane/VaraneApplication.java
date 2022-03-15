@@ -6,6 +6,7 @@ import com.hazelcast.client.config.ClientUserCodeDeploymentConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.varane.repositories.StudentRepo;
+import com.varane.utils.HazelcastInitializer;
 import com.varane.utils.PopulateData;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -38,13 +39,6 @@ public class VaraneApplication extends SpringBootServletInitializer {
 
     @Bean
     HazelcastInstance hazelcastInstance() {
-        ClientConfig clientConfig = new ClientConfig();
-        clientConfig.getUserCodeDeploymentConfig().setEnabled(true);
-        ClientUserCodeDeploymentConfig distCLConfig = clientConfig.getUserCodeDeploymentConfig();
-        List<String> classNames  = new ArrayList<>();
-        classNames.add("com.varane.models.Student");
-        distCLConfig.setEnabled( true )
-                .setClassNames(classNames);
-        return HazelcastClient.newHazelcastClient(clientConfig);
+        return HazelcastInitializer.getHazelcastInstance();
     }
 }

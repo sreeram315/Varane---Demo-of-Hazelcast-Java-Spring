@@ -1,8 +1,10 @@
-package com.varane.controllers;
+package com.varane.controllers.student;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.query.impl.predicates.SqlPredicate;
+import com.hazelcast.sql.SqlResult;
+import com.hazelcast.sql.SqlRow;
 import com.hazelcast.sql.SqlService;
 import com.varane.dao.StudentDAO;
 import com.varane.models.Student;
@@ -83,42 +85,22 @@ public class StudentController {
         IMap<Integer, Student> hazelcastStudentsMap = studentDAO.getHazelcastStudentsMap();
         List<Student> students = null;
 
-      students = new ArrayList(hazelcastStudentsMap.values(new SqlPredicate(sqlPredicateString)));
+        students = new ArrayList(hazelcastStudentsMap.values(new SqlPredicate(sqlPredicateString)));
         return students;
     }
 
     @GetMapping("/sql-test")
     void sqlTest(){
-//        HazelcastInstance hazelcastInstance = studentDAO.getHazelcastInstance();
         SqlService sqlService = hazelcastInstance.getSql();
 
-        sqlService.execute(" ");
-
-//        sqlService.execute("CREATE MAPPING studentMap ( "
-//                + "__key INT, "
-//                + "id INT ) "
-//                + "name VARCHAR ,"
-//                + "contact VARCHAR,"
-//                + "TYPE IMap "
-//                + "OPTIONS ("
-//                + "    'keyFormat'='int', "
-//                + "    'valueFormat'='compact', "
-//                + "    'valueCompactTypeName'='" + Student.class.getName() + "' ) ");
-
-//        sqlService.execute("INSERT INTO studentMap (__key, name, surname, id) VALUES (202020, ?, ?, 202020)", "Jack", "Sparrowlord");
-
-//        Query map with sql
-//        SqlResult sqlRows = sqlService.execute("SELECT * FROM studentMap WHERE id = 202020");
-//        for (SqlRow sqlRow : sqlRows) {
-//            System.out.println(sqlRow);
-//        }
-//        try (SqlResult result = hazelcastInstance.getSql().execute("SELECT __key FROM student")) {
-//            for (SqlRow row : result) {
-//                String student_name = row.getObject(0);
-//
-//                System.out.println(student_name);
-//            }
-//        }
+        try (SqlResult result = sqlService.execute("SELECT id, name, contact FROM students ORDER BY id")) {
+            for (SqlRow row : result) {
+                Integer id = row.getObject("id");
+                String name = row.getObject("name");
+                String contact = row.getObject("contact");
+                System.out.println(id + " " + name + " " + contact);
+            }
+        }
     }
 
 

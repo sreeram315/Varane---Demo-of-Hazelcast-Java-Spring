@@ -20,8 +20,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-rest'
     implementation 'org.springframework.boot:spring-boot-starter-tomcat'
     implementation 'com.h2database:h2:2.1.210'
-    implementation 'com.hazelcast:hazelcast'
-    implementation 'com.hazelcast:hazelcast-sql:4.2.4'
+    implementation 'com.hazelcast:hazelcast:5.1'
+    implementation 'com.hazelcast:hazelcast-sql:5.1'
 
 }
 
