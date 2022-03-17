@@ -4,49 +4,37 @@ A java application demonstrating use of hazelcast caching in client-server mode.
 Read about it here: https://docs.hazelcast.com/imdg/4.2/overview/topology
 
 
-- Uses embedded H2 database, and adds filler data on app startup, so you can just clone and run the app straight away.
+- This application uses embedded H2 database, and adds filler data on app startup, so you can just clone and run the app straight away.
     ```
-    ./gradlew bootRun
+    $ ./gradlew bootRun
     ```
+- Start a hazelcast server in the local machine, the application on start-up will detect and connect to the cluster automatically.
 
-- To observe hazelcast member cluster in case of multi-instance setup, build jar
-  `./gradlew bootJar` and run multiple instances.
-    ```
-    java -jar <jar_file.jar> --server.port=8081
-    java -jar <jar_file.jar> --server.port=8082
-    java -jar <jar_file.jar> --server.port=8083
-    ```
 
-- Kill/start new instances to observe changes in hazelcast cluster members as well in logs.
+**How to start a hazelcast cluster ?**
+- You can start one through command line, if your machine is compatible. (https://docs.hazelcast.com/imdg/4.2/getting-started)
+- Or you can run a docker image directly. Make sure you enable user code deployment in hazelcast config file. (https://docs.hazelcast.com/imdg/4.2/clusters/deploying-code-from-clients) 
+  ```
+  $ docker network create hazelcast-network
+  $ docker run \
+    -it \
+    --network hazelcast-network \
+    --rm \
+    -v <local-path-to hazelcast.yaml>:/opt/hazelcast/hazelcast.yml \
+    -e HZ_CLUSTERNAME=dev \
+    -e HAZELCAST_CONFIG=hazelcast.yml \
+    -p 5701:5701 hazelcast/hazelcast:5.0.2
+  ```
+  For more cluster members, run again with different exposed port number. They all be brothers, detecting each other's presence (and absence too - when they are killed) automatically.
+- Or, there are many other ways.
 
 
 **Regarding the application**
 - The APIs in controller will help understand and demonstrate caching.
 - Note that this app uses in-memory H2 database, so we cannot really distinguish between hazelcast cache and h2 db calls. So, to demonstrate the difference every H2 db call has a delay of extra 1 second added to it.
-- The endpoints in Controller demo make use of hazelcast data structures, primarily IMap. SQL querying of Imap is shown in one if that interests you.
-
-**Further**
-- Docker compose is added. Generate .war before building, docker image is of tomcat.
-    ```
-    ./gradlew bootWar
-    docker-compose build
-    docker-compose up
-    ```
-- To demo hazelcast on k8s deployment, use above generated image here.
-    ```
-    kubectl create deployment hazelcast-server-demo --image=IMAGE:TAG --replicas=3
-    ```
-- You may add/delete/kill replicas to demo hazelcast cluster(in logs) and how they sync between each other.
+- The controllers demonstrate using hazelcast data structure for adding/querying, create mapping between models and data structure values, SQL predicate, pure SQL usage for querying, and distributed lock.
 
 
-**Listing endpoints**
-```
-GET http://localhost:8080/student/get?id=8
-GET http://localhost:8080/student/all-in-cache
-GET http://localhost:8080/student/sql-example
-POST http://localhost:8080/varane/student/add?id=2&name=wiraram&contact=8919937557
-```
-- /student/get?id=8 can help understand improvement in response time once the data is cached (after first call)
-- Note: About 1000 student entries are added to db student table on startup.
+Note: About 1000 entries are added to db student table on startup. 
 
 Point of contact: Sreeram Maram
