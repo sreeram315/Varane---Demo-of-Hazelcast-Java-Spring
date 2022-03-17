@@ -20,7 +20,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /**
  * Controllers for student related services
  * @author Sreeram Maram
@@ -83,7 +82,7 @@ public class StudentController {
     }
 
     /**
-     * endpoint to demonstrate sql predicate
+     * Endpoint to demonstrate sql predicate
      * Values in Imap here are listed and queried in an SQL fashion.
      *
      * Returns the students who have substring name in their name (cached students are only queried)

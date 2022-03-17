@@ -21,13 +21,12 @@ public class HazelcastInitializer {
 
     public static ClientConfig getConfig(){
         ClientConfig clientConfig = new ClientConfig();
-        clientConfig.getUserCodeDeploymentConfig().setEnabled(true);
-        ClientUserCodeDeploymentConfig distCLConfig = clientConfig.getUserCodeDeploymentConfig();
+        ClientUserCodeDeploymentConfig userCodeDeploymentConfig =  clientConfig.getUserCodeDeploymentConfig();
         List<String> classNames  = new ArrayList<>();
         // defining models at server
         classNames.add("com.varane.models.Student");
-        distCLConfig.setEnabled( true )
-                .setClassNames(classNames);
+        userCodeDeploymentConfig.setEnabled( true ).setClassNames(classNames);
+        clientConfig.setUserCodeDeploymentConfig(userCodeDeploymentConfig);
         return clientConfig;
     }
 
@@ -41,14 +40,14 @@ public class HazelcastInitializer {
 
         // Mapping for model: com.varane.models.Student for IMAP
         sqlService.execute(String.format("DROP MAPPING IF EXISTS %s", StudentConstants.CACHE_MAP));
-        sqlService.execute(String.format("""
-                CREATE MAPPING %s
-                TYPE IMap
-                OPTIONS (
-                    'keyFormat' = 'java',
-                    'keyJavaClass' = 'java.lang.Integer',
-                    'valueFormat' = 'java',
-                    'valueJavaClass' = 'com.varane.models.Student'
-                )""", StudentConstants.CACHE_MAP));
+        sqlService.execute(
+                String.format("CREATE MAPPING %s\n", StudentConstants.CACHE_MAP) +
+                "                TYPE IMap\n" +
+                "                OPTIONS (\n" +
+                "                    'keyFormat' = 'java',\n" +
+                "                    'keyJavaClass' = 'java.lang.Integer',\n" +
+                "                    'valueFormat' = 'java',\n" +
+                "                    'valueJavaClass' = 'com.varane.models.Student'\n" +
+                "                )");
     }
 }

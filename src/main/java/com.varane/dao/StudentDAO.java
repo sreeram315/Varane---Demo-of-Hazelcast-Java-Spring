@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 /**
  * This DAO is to insert/update student entries in databse
@@ -69,7 +70,11 @@ public class StudentDAO {
             throw new ResponseStatusException(HttpStatus.CONFLICT, String.format("Student with id:%d - Already Exists ", student.getId()));
         }
         Thread.sleep(1000);
+        // more on locks: https://docs.hazelcast.com/imdg/4.2/data-structures/fencedlock
+        Lock lock = hazelcastInstance.getCPSubsystem().getLock(StudentConstants.STUDENT_TABLE_LOCK);
+        lock.lock();
         studentRepo.insertingStudent(id, name, contact);
+        lock.unlock();
         student = this.findById(id);
         LOG.info(String.format("Adding student to cache with id: %d", student.getId()));
         getHazelcastStudentsMap().put(student.getId(), student);
