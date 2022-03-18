@@ -38,3 +38,10 @@ Read about it here: https://docs.hazelcast.com/imdg/4.2/overview/topology
 Note: About 1000 entries are added to db student table on startup. 
 
 Point of contact: Sreeram Maram
+
+
+# Note 
+
+Hi, this project has a branche name "hazelcast".
+
+Checkout `hazelcast` branch to demonstrate yourself how Hazelcast in **embedded** mode works.
