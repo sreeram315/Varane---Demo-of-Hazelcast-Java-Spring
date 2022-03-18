@@ -1,7 +1,8 @@
 package com.varane;
 
-import com.varane.dao.StudentDAO;
+import com.hazelcast.core.HazelcastInstance;
 import com.varane.repositories.StudentRepo;
+import com.varane.utils.HazelcastInitializer;
 import com.varane.utils.PopulateData;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -21,11 +22,16 @@ public class VaraneApplication extends SpringBootServletInitializer {
 
     /**
      * Insert dummy data into table while using non-persistent database
-     * @param studentRepo
-     * @return
+     * @param studentRepo Student repository
+     * @return A Bean. Not the food kind.
      */
     @Bean
     public CommandLineRunner startup(StudentRepo studentRepo) {
         return args -> PopulateData.init(studentRepo);
+    }
+
+    @Bean
+    HazelcastInstance hazelcastInstance() {
+        return HazelcastInitializer.getHazelcastInstance();
     }
 }
